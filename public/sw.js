@@ -1,4 +1,4 @@
-const CACHE_NAME = 'tkb-offline-v1';
+const CACHE_NAME = 'tkb-offline-v2';
 const ASSETS = [
   './',
   './index.html',

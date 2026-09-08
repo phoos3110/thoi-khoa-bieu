@@ -9,9 +9,12 @@ import {
   Check, 
   X, 
   Calendar,
-  AlertCircle
+  AlertCircle,
+  Palette
 } from 'lucide-react';
 import { ClassItem, DayNumber } from './types/schedule';
+import { AppThemeConfig, DEFAULT_THEME_CONFIG, PRESET_THEMES } from './types/theme';
+import { ThemeModal } from './components/ThemeModal';
 
 const DAYS: { number: DayNumber; name: string; short: string }[] = [
   { number: 2, name: 'Thứ Hai', short: 'Thứ 2' },
@@ -51,6 +54,27 @@ export default function App() {
   const [activeDay, setActiveDay] = useState<DayNumber>(todayNumber || 2);
   const [currentDateStr, setCurrentDateStr] = useState<string>(getFormattedDate());
   const [isOnline, setIsOnline] = useState<boolean>(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+  // Theme configuration state
+  const [themeConfig, setThemeConfig] = useState<AppThemeConfig>(() => {
+    try {
+      const saved = localStorage.getItem('don_gian_tkb_theme');
+      if (saved) return JSON.parse(saved);
+      return DEFAULT_THEME_CONFIG;
+    } catch {
+      return DEFAULT_THEME_CONFIG;
+    }
+  });
+  const [showThemeModal, setShowThemeModal] = useState(false);
+
+  // Save Theme to LocalStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('don_gian_tkb_theme', JSON.stringify(themeConfig));
+    } catch (e) {
+      console.error('Không thể lưu theme vào LocalStorage:', e);
+    }
+  }, [themeConfig]);
 
   // Lắng nghe trạng thái online/offline
   useEffect(() => {
@@ -205,31 +229,78 @@ export default function App() {
   const activeDayObj = DAYS.find((d) => d.number === activeDay);
   const todayObj = DAYS.find((d) => d.number === todayNumber);
 
+  // Theme calculations
+  const currentPreset = PRESET_THEMES.find((p) => p.id === themeConfig.presetId) || PRESET_THEMES[0];
+  const isCustomImage = themeConfig.type === 'custom' && !!themeConfig.customImage;
+  const isDarkMode = isCustomImage ? themeConfig.overlayDarkness >= 45 : (currentPreset.style.isDark ?? false);
+
   return (
-    <div className="min-h-screen bg-slate-100 flex flex-col justify-between max-w-md mx-auto shadow-md">
-      {/* 1. Header Đơn Giản */}
-      <header className="bg-blue-600 text-white p-4 sticky top-0 z-10 shadow">
+    <div className="min-h-screen bg-slate-900 flex justify-center selection:bg-blue-500 selection:text-white">
+      {/* Khung ứng dụng di động: Toàn bộ nền, ảnh nền và nội dung được giới hạn bên trong khung này */}
+      <div className="w-full max-w-md min-h-screen relative flex flex-col justify-between shadow-2xl overflow-hidden bg-slate-900">
+        {/* 0. Background Layer 1 (Color / Gradient / Pattern / Custom Image) - Chỉ hiển thị trong khung app */}
+        <div 
+          className="absolute inset-0 pointer-events-none transition-all duration-300 z-0"
+          style={{
+            background: isCustomImage ? undefined : currentPreset.style.background,
+            backgroundImage: isCustomImage 
+              ? `url(${themeConfig.customImage})` 
+              : (currentPreset.style.pattern || undefined),
+            backgroundSize: isCustomImage ? 'cover' : undefined,
+            backgroundPosition: isCustomImage ? 'center center' : undefined,
+            backgroundRepeat: isCustomImage ? 'no-repeat' : undefined,
+            filter: themeConfig.blur > 0 ? `blur(${themeConfig.blur}px)` : undefined,
+            transform: themeConfig.blur > 0 ? 'scale(1.08)' : undefined,
+          }}
+        />
+
+        {/* 0. Background Layer 2 (Lớp phủ tối mờ tinh chỉnh) - Chỉ hiển thị trong khung app */}
+        {themeConfig.overlayDarkness > 0 && (
+          <div 
+            className="absolute inset-0 pointer-events-none transition-opacity duration-200 z-0"
+            style={{
+              backgroundColor: '#000000',
+              opacity: themeConfig.overlayDarkness / 100,
+            }}
+          />
+        )}
+
+      {/* 1. Header */}
+      <header className={`${isCustomImage ? 'bg-slate-900/80 backdrop-blur-md border-b border-white/10' : currentPreset.style.headerBg} text-white p-4 sticky top-0 z-10 shadow-md transition-colors duration-300`}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold flex items-center gap-2">
-              <Calendar className="w-6 h-6" />
+              <Calendar className="w-5 h-5" />
               Thời Khóa Biểu
             </h1>
-            <p className="text-xs text-blue-100 mt-0.5">
+            <p className="text-xs text-white/80 mt-0.5">
               Hôm nay: <span className="font-bold underline">{todayObj ? todayObj.name : 'Chủ nhật'}</span> ({currentDateStr})
             </p>
           </div>
 
-          <button
-            onClick={() => handleOpenAdd(activeDay)}
-            className="flex items-center gap-1.5 bg-white text-blue-600 font-bold px-3 py-1.5 rounded-lg text-sm shadow active:scale-95 transition"
-          >
-            <Plus className="w-4 h-4 stroke-[3]" />
-            <span>Thêm ca</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Nút Đổi nền */}
+            <button
+              onClick={() => setShowThemeModal(true)}
+              className="flex items-center gap-1 bg-white/20 hover:bg-white/30 text-white font-semibold px-2.5 py-1.5 rounded-lg text-xs backdrop-blur-sm border border-white/25 active:scale-95 transition"
+              title="Đổi hình nền / giao diện"
+            >
+              <Palette className="w-3.5 h-3.5" />
+              <span>Đổi nền</span>
+            </button>
+
+            {/* Nút Thêm ca */}
+            <button
+              onClick={() => handleOpenAdd(activeDay)}
+              className="flex items-center gap-1 bg-white text-slate-900 font-bold px-3 py-1.5 rounded-lg text-xs shadow active:scale-95 transition"
+            >
+              <Plus className="w-3.5 h-3.5 stroke-[3]" />
+              <span>Thêm ca</span>
+            </button>
+          </div>
         </div>
 
-        {/* 2. Thanh Chọn Thứ 2 đến Thứ 7 - Bấm vào thứ nào sẽ xem ngay lịch của thứ đó */}
+        {/* 2. Thanh Chọn Thứ 2 đến Thứ 7 */}
         <div className="grid grid-cols-6 gap-1 mt-3">
           {DAYS.map((d) => {
             const isSelected = activeDay === d.number;
@@ -242,15 +313,15 @@ export default function App() {
                 onClick={() => setActiveDay(d.number)}
                 className={`py-2 rounded-lg text-center transition flex flex-col items-center justify-center relative ${
                   isSelected
-                    ? 'bg-white text-blue-700 font-bold shadow-md'
-                    : 'bg-blue-700/60 text-blue-100 hover:bg-blue-700 font-medium'
+                    ? 'bg-white text-slate-900 font-bold shadow-md'
+                    : 'bg-black/20 hover:bg-black/30 text-white/90 font-medium backdrop-blur-xs'
                 }`}
               >
                 {/* Huy hiệu nhỏ báo đây là ngày Hôm Nay */}
                 {isToday && (
                   <span
                     className={`absolute -top-1 px-1 py-0.2 text-[8px] font-bold rounded-full uppercase leading-tight ${
-                      isSelected ? 'bg-amber-400 text-slate-900' : 'bg-amber-300 text-blue-900'
+                      isSelected ? 'bg-amber-400 text-slate-900' : 'bg-amber-300 text-slate-900'
                     }`}
                   >
                     Nay
@@ -267,13 +338,17 @@ export default function App() {
       </header>
 
       {/* 3. Tiêu đề hiển thị rõ ràng ngày đang xem */}
-      <div className="bg-white border-b border-slate-200 px-4 py-2.5 flex items-center justify-between">
+      <div className={`px-4 py-2.5 flex items-center justify-between border-b transition-colors duration-200 ${
+        isDarkMode 
+          ? 'bg-slate-900/80 backdrop-blur-md border-slate-800 text-white' 
+          : 'bg-white/85 backdrop-blur-md border-slate-200/80 text-slate-900'
+      }`}>
         <div className="flex items-center gap-2">
-          <span className="font-bold text-slate-900 text-base">
+          <span className="font-bold text-base">
             Lịch học {activeDayObj?.name}
           </span>
           {isSelectedToday && (
-            <span className="text-[11px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full">
+            <span className="text-[11px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded-full">
               Hôm nay
             </span>
           )}
@@ -283,7 +358,11 @@ export default function App() {
         {todayNumber && activeDay !== todayNumber && (
           <button
             onClick={() => setActiveDay(todayNumber)}
-            className="text-xs text-blue-600 font-bold bg-blue-50 hover:bg-blue-100 px-2.5 py-1 rounded-md transition"
+            className={`text-xs font-bold px-2.5 py-1 rounded-md transition ${
+              isDarkMode
+                ? 'text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-800/40'
+                : 'text-blue-600 bg-blue-50 hover:bg-blue-100'
+            }`}
           >
             Về hôm nay ({todayObj?.short})
           </button>
@@ -292,28 +371,36 @@ export default function App() {
 
       {/* 4. Danh sách ca học của ngày được chọn */}
       <main className="p-3.5 flex-1 space-y-3 overflow-y-auto">
-        <div className="flex items-center justify-between text-xs text-slate-500 font-semibold px-1">
-          <span>{currentDayClasses.length} ca học trong ngày</span>
-          <div className="flex items-center gap-1.5 text-[11px] font-medium bg-slate-200/70 px-2 py-0.5 rounded-full">
-            <span className={`w-2 h-2 rounded-full ${isOnline ? 'bg-emerald-500' : 'bg-amber-500 animate-pulse'}`}></span>
-            <span>{isOnline ? 'PWA Offline sẵn sàng' : 'Chế độ Offline'}</span>
-          </div>
+        <div className="flex items-center justify-between text-xs font-semibold px-1">
+          <span className={isDarkMode ? 'text-slate-300' : 'text-slate-600'}>
+            {currentDayClasses.length} ca học trong ngày
+          </span>
+          {!isOnline && (
+            <div className="flex items-center gap-1.5 text-[11px] font-medium px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-500 border border-amber-500/30 backdrop-blur-xs">
+              <span className="w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+              <span>Đang offline</span>
+            </div>
+          )}
         </div>
 
         {currentDayClasses.length === 0 ? (
-          <div className="bg-white rounded-xl p-8 text-center border border-dashed border-slate-300 mt-2">
-            <BookOpen className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-            <p className="font-semibold text-slate-700 text-base">
+          <div className={`rounded-xl p-8 text-center border border-dashed mt-2 backdrop-blur-md transition-colors ${
+            isDarkMode 
+              ? 'bg-slate-900/60 border-slate-700/60 text-slate-300' 
+              : 'bg-white/80 border-slate-300/80 text-slate-700'
+          }`}>
+            <BookOpen className="w-10 h-10 text-slate-400 mx-auto mb-2 opacity-60" />
+            <p className="font-semibold text-base">
               {isSelectedToday
                 ? 'Hôm nay bạn chưa có ca học nào'
                 : `${activeDayObj?.name} chưa có ca học nào`}
             </p>
-            <p className="text-xs text-slate-400 mt-1 mb-4">
+            <p className="text-xs opacity-75 mt-1 mb-4">
               Bấm nút bên dưới để thêm môn học và phòng học cho {activeDayObj?.name}
             </p>
             <button
               onClick={() => handleOpenAdd(activeDay)}
-              className="inline-flex items-center gap-1.5 bg-blue-600 text-white font-semibold text-sm px-4 py-2 rounded-lg shadow active:scale-95"
+              className="inline-flex items-center gap-1.5 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm px-4 py-2 rounded-lg shadow active:scale-95 transition"
             >
               <Plus className="w-4 h-4" />
               Thêm môn cho {activeDayObj?.short}
@@ -324,7 +411,11 @@ export default function App() {
             {currentDayClasses.map((item) => (
               <div
                 key={item.id}
-                className="bg-white rounded-xl p-3.5 shadow-sm border border-slate-200 relative overflow-hidden flex items-center justify-between"
+                className={`rounded-xl p-3.5 shadow-sm relative overflow-hidden flex items-center justify-between backdrop-blur-md transition border ${
+                  isDarkMode
+                    ? 'bg-slate-900/80 border-slate-700/60 text-white'
+                    : 'bg-white/90 border-white/60 shadow-xs text-slate-900'
+                }`}
               >
                 {/* Dải màu bên trái */}
                 <div
@@ -334,19 +425,27 @@ export default function App() {
 
                 {/* Thông tin môn */}
                 <div className="pl-2 space-y-1">
-                  <h3 className="font-bold text-slate-900 text-base leading-tight">
+                  <h3 className="font-bold text-base leading-tight">
                     {item.subject}
                   </h3>
 
-                  <div className="flex flex-wrap items-center gap-3 text-xs text-slate-600 pt-0.5">
+                  <div className="flex flex-wrap items-center gap-2.5 text-xs pt-0.5">
                     {/* Giờ học */}
-                    <div className="flex items-center gap-1 font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded">
+                    <div className={`flex items-center gap-1 font-semibold px-2 py-0.5 rounded ${
+                      isDarkMode 
+                        ? 'text-sky-300 bg-sky-950/80 border border-sky-800/40' 
+                        : 'text-blue-600 bg-blue-50'
+                    }`}>
                       <Clock className="w-3.5 h-3.5" />
                       <span>{item.startTime} - {item.endTime}</span>
                     </div>
 
                     {/* Phòng học */}
-                    <div className="flex items-center gap-1 text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                    <div className={`flex items-center gap-1 px-2 py-0.5 rounded ${
+                      isDarkMode 
+                        ? 'text-slate-200 bg-slate-800/80 border border-slate-700/50' 
+                        : 'text-slate-700 bg-slate-100'
+                    }`}>
                       <MapPin className="w-3.5 h-3.5 text-rose-500" />
                       <span>{item.room}</span>
                     </div>
@@ -357,14 +456,22 @@ export default function App() {
                 <div className="flex items-center gap-1 shrink-0 ml-2">
                   <button
                     onClick={() => handleOpenEdit(item)}
-                    className="p-2 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded-lg active:scale-90"
+                    className={`p-2 rounded-lg active:scale-90 transition ${
+                      isDarkMode
+                        ? 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+                        : 'text-slate-500 hover:text-blue-600 hover:bg-blue-50'
+                    }`}
                     title="Sửa ca học"
                   >
                     <Edit2 className="w-4 h-4" />
                   </button>
                   <button
                     onClick={() => handleDelete(item.id, item.subject)}
-                    className="p-2 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg active:scale-90"
+                    className={`p-2 rounded-lg active:scale-90 transition ${
+                      isDarkMode
+                        ? 'text-slate-300 hover:text-rose-400 hover:bg-rose-950/40'
+                        : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50'
+                    }`}
                     title="Xóa ca học"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -377,10 +484,14 @@ export default function App() {
       </main>
 
       {/* 5. Nút bấm thêm to ở góc dưới cho điện thoại */}
-      <div className="p-3.5 bg-white border-t border-slate-200 sticky bottom-0">
+      <div className={`p-3.5 border-t sticky bottom-0 backdrop-blur-md transition-colors ${
+        isDarkMode 
+          ? 'bg-slate-900/85 border-slate-800' 
+          : 'bg-white/85 border-slate-200/80'
+      }`}>
         <button
           onClick={() => handleOpenAdd(activeDay)}
-          className="w-full bg-blue-600 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition text-base"
+          className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl shadow-md flex items-center justify-center gap-2 active:scale-98 transition text-base"
         >
           <Plus className="w-5 h-5 stroke-[2.5]" />
           <span>Thêm ca học cho {activeDayObj?.short}</span>
@@ -389,16 +500,26 @@ export default function App() {
 
       {/* 6. Modal Thêm / Sửa ca học */}
       {showModal && (
-        <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-sm rounded-2xl p-5 shadow-2xl relative animate-in fade-in duration-150">
+        <div className="fixed inset-0 z-50 bg-black/65 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className={`w-full max-w-sm rounded-2xl p-5 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150 transition-colors ${
+            isDarkMode 
+              ? 'bg-slate-900 text-white border border-slate-700/80' 
+              : 'bg-white text-slate-900 border border-slate-200/60'
+          }`}>
             {/* Tiêu đề modal */}
-            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
-              <h2 className="font-bold text-lg text-slate-900">
+            <div className={`flex items-center justify-between pb-3 border-b ${
+              isDarkMode ? 'border-slate-800' : 'border-slate-100'
+            }`}>
+              <h2 className="font-bold text-lg">
                 {editingId ? 'Sửa ca học' : 'Thêm ca học mới'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-slate-400 hover:text-slate-600 p-1"
+                className={`p-1 rounded-lg transition ${
+                  isDarkMode 
+                    ? 'text-slate-400 hover:text-white hover:bg-slate-800' 
+                    : 'text-slate-400 hover:text-slate-600 hover:bg-slate-100'
+                }`}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -406,7 +527,7 @@ export default function App() {
 
             {/* Báo lỗi nếu thiếu */}
             {formError && (
-              <div className="mt-3 p-2.5 bg-rose-50 text-rose-600 text-xs rounded-lg flex items-center gap-1.5 font-medium">
+              <div className="mt-3 p-2.5 bg-rose-500/15 border border-rose-500/30 text-rose-500 text-xs rounded-lg flex items-center gap-1.5 font-medium">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{formError}</span>
               </div>
@@ -415,7 +536,9 @@ export default function App() {
             <form onSubmit={handleSave} className="mt-3 space-y-3.5 text-sm">
               {/* Chọn thứ */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className={`block text-xs font-bold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}>
                   1. Học vào ngày nào?
                 </label>
                 <div className="grid grid-cols-6 gap-1">
@@ -426,7 +549,9 @@ export default function App() {
                       onClick={() => setFormDay(d.number)}
                       className={`py-1.5 rounded-lg text-xs font-bold border transition ${
                         formDay === d.number
-                          ? 'bg-blue-600 text-white border-blue-600'
+                          ? 'bg-blue-600 text-white border-blue-600 shadow-sm'
+                          : isDarkMode
+                          ? 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
                           : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
                       }`}
                     >
@@ -438,7 +563,9 @@ export default function App() {
 
               {/* Tên môn */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className={`block text-xs font-bold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}>
                   2. Tên môn học:
                 </label>
                 <input
@@ -447,13 +574,19 @@ export default function App() {
                   placeholder="VD: Toán, Tiếng Anh, Lập trình..."
                   value={formSubject}
                   onChange={(e) => setFormSubject(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:bg-slate-800'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 focus:bg-white'
+                  }`}
                 />
               </div>
 
               {/* Phòng học */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className={`block text-xs font-bold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}>
                   3. Phòng học:
                 </label>
                 <input
@@ -462,34 +595,52 @@ export default function App() {
                   placeholder="VD: Phòng 301, Lab 2, Nhà A..."
                   value={formRoom}
                   onChange={(e) => setFormRoom(e.target.value)}
-                  className="w-full px-3 py-2 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`w-full px-3 py-2 border rounded-lg font-medium transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                    isDarkMode
+                      ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500 focus:bg-slate-800'
+                      : 'bg-slate-50 border-slate-300 text-slate-900 focus:bg-white'
+                  }`}
                 />
               </div>
 
               {/* Giờ học: từ mấy giờ đến mấy giờ */}
               <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1">
+                <label className={`block text-xs font-bold mb-1 ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}>
                   4. Giờ học (Từ mấy giờ đến mấy giờ):
                 </label>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <span className="text-[11px] text-slate-500 block mb-0.5">Từ:</span>
+                    <span className={`text-[11px] block mb-0.5 ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>Từ:</span>
                     <input
                       type="time"
                       required
                       value={formStartTime}
                       onChange={(e) => setFormStartTime(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-2.5 py-1.5 border rounded-lg font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode
+                          ? 'bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-50 border-slate-300 text-slate-900 focus:bg-white'
+                      }`}
                     />
                   </div>
                   <div>
-                    <span className="text-[11px] text-slate-500 block mb-0.5">Đến:</span>
+                    <span className={`text-[11px] block mb-0.5 ${
+                      isDarkMode ? 'text-slate-400' : 'text-slate-500'
+                    }`}>Đến:</span>
                     <input
                       type="time"
                       required
                       value={formEndTime}
                       onChange={(e) => setFormEndTime(e.target.value)}
-                      className="w-full px-2.5 py-1.5 bg-slate-50 border border-slate-300 rounded-lg text-slate-900 font-bold focus:bg-white focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className={`w-full px-2.5 py-1.5 border rounded-lg font-bold transition focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        isDarkMode
+                          ? 'bg-slate-800 border-slate-700 text-white'
+                          : 'bg-slate-50 border-slate-300 text-slate-900 focus:bg-white'
+                      }`}
                     />
                   </div>
                 </div>
@@ -497,7 +648,9 @@ export default function App() {
 
               {/* Màu sắc */}
               <div>
-                <span className="block text-xs font-bold text-slate-700 mb-1.5">
+                <span className={`block text-xs font-bold mb-1.5 ${
+                  isDarkMode ? 'text-slate-300' : 'text-slate-700'
+                }`}>
                   5. Chọn màu hiển thị:
                 </span>
                 <div className="flex items-center gap-2">
@@ -518,17 +671,23 @@ export default function App() {
               </div>
 
               {/* Nút hành động */}
-              <div className="pt-2 flex items-center justify-end gap-2 border-t border-slate-100">
+              <div className={`pt-2.5 flex items-center justify-end gap-2 border-t ${
+                isDarkMode ? 'border-slate-800' : 'border-slate-100'
+              }`}>
                 <button
                   type="button"
                   onClick={() => setShowModal(false)}
-                  className="px-4 py-2 text-slate-600 font-medium hover:bg-slate-100 rounded-lg"
+                  className={`px-4 py-2 font-medium rounded-lg transition ${
+                    isDarkMode
+                      ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+                      : 'text-slate-600 hover:bg-slate-100'
+                  }`}
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow active:scale-95"
+                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md active:scale-95 transition"
                 >
                   {editingId ? 'Cập nhật' : 'Lưu lại'}
                 </button>
@@ -537,6 +696,17 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* 7. Modal Tùy Chỉnh Hình Nền */}
+      {showThemeModal && (
+        <ThemeModal
+          themeConfig={themeConfig}
+          isDarkMode={isDarkMode}
+          onUpdateTheme={setThemeConfig}
+          onClose={() => setShowThemeModal(false)}
+        />
+      )}
+      </div>
     </div>
   );
 }
