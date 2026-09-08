@@ -321,62 +321,97 @@ export default function App() {
   // Theme tokens (computed from mode)
   // ─────────────────────────────────────────────
   const tk = {
+    // Nền app: Dark = midnight navy sâu với điểm sáng violet tinh tế ở góc
     appBg: isDark
-      ? 'radial-gradient(at 50% 0%, #0f172a 0px, transparent 75%), radial-gradient(at 100% 100%, #020617 0px, transparent 75%), #020617'
+      ? 'radial-gradient(ellipse at 20% 0%, #1e1b4b 0px, transparent 55%), radial-gradient(ellipse at 80% 100%, #0c0a1e 0px, transparent 55%), #080612'
       : 'radial-gradient(at 0% 0%, #eff6ff 0px, transparent 65%), radial-gradient(at 100% 100%, #dbeafe 0px, transparent 65%), #f8fafc',
+
+    // Header: Dark = glassmorphism với viền violet mờ + gradient neon nhẹ
     headerBg: isDark
-      ? 'bg-slate-950/90 backdrop-blur-xl border-b border-slate-800/80'
+      ? 'bg-gradient-to-r from-slate-950/95 via-indigo-950/80 to-slate-950/95 backdrop-blur-xl border-b border-indigo-900/40 shadow-lg shadow-black/40'
       : 'bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700',
+
+    // Sub-header: Dark = trong suốt kiểu frosted glass
     subHeader: isDark
-      ? 'bg-slate-900/85 backdrop-blur-xl border-b border-slate-800 text-slate-100'
+      ? 'bg-slate-900/70 backdrop-blur-xl border-b border-white/5 text-slate-100'
       : 'bg-white/85 backdrop-blur-md border-b border-blue-100 text-slate-900',
+
+    // Nút chính: Dark = gradient cyan-violet neon rực rỡ
     primaryBtn: isDark
-      ? 'bg-gradient-to-r from-sky-400 to-blue-500 text-slate-950 font-extrabold shadow-lg shadow-sky-400/20'
+      ? 'bg-gradient-to-r from-cyan-400 via-sky-400 to-indigo-500 hover:from-cyan-300 hover:to-indigo-400 text-slate-950 font-extrabold shadow-lg shadow-cyan-500/25 active:shadow-cyan-400/30'
       : 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white shadow-lg shadow-blue-500/25',
+
+    // Tab ngày đang chọn: Dark = cyan neon rõ nét
     activeDayTab: isDark
-      ? 'bg-sky-400 text-slate-950 font-extrabold shadow-md shadow-sky-400/30'
+      ? 'bg-gradient-to-b from-cyan-400 to-sky-500 text-slate-950 font-extrabold shadow-lg shadow-cyan-400/40 ring-1 ring-cyan-300/50'
       : 'bg-white text-blue-700 shadow-md ring-1 ring-blue-100',
+
+    // Card môn học: Dark = kính mờ với viền violet/indigo tinh tế, hover sáng lên
     cardBg: isDark
-      ? 'bg-slate-900/85 backdrop-blur-xl border-slate-800/90'
+      ? 'bg-slate-900/60 backdrop-blur-xl border-indigo-900/50 hover:border-indigo-700/60 hover:bg-slate-800/70'
       : 'bg-white/90 backdrop-blur-md border-slate-200/80',
+
     cardTitle: isDark ? 'text-white' : 'text-slate-900',
+
+    // Badge giờ: Dark = cyan neon
     timeBadge: isDark
-      ? 'text-sky-300 bg-sky-950/80 border border-sky-800/60'
+      ? 'text-cyan-300 bg-cyan-950/60 border border-cyan-800/50'
       : 'text-blue-700 bg-blue-50/90 border border-blue-200/70',
+
+    // Badge phòng: Dark = trắng mờ tinh tế
     roomBadge: isDark
-      ? 'text-slate-300 bg-slate-800/80 border border-slate-700/60'
+      ? 'text-slate-300 bg-white/5 border border-white/10'
       : 'text-slate-700 bg-slate-100/90 border border-slate-200/50',
+
+    // Card rỗng: Dark = kính tối mờ có viền violet
     emptyCard: isDark
-      ? 'bg-slate-900/60 border-slate-700/60 text-slate-300'
+      ? 'bg-indigo-950/30 border-indigo-900/50 text-slate-300 backdrop-blur-md'
       : 'bg-white/80 border-slate-300/80 text-slate-700',
+
+    // Bottom bar: Dark = đen sâu với viền mờ
     bottomBar: isDark
-      ? 'bg-slate-950/85 border-slate-800'
+      ? 'bg-slate-950/90 border-white/5 backdrop-blur-xl'
       : 'bg-white/85 border-slate-200/80',
+
+    // Input: Dark = nền xanh đen với viền mờ
     inputBg: isDark
-      ? 'bg-slate-800 border-slate-700 text-white placeholder-slate-500'
+      ? 'bg-slate-800/80 border-indigo-900/60 text-white placeholder-slate-500 focus:border-cyan-600'
       : 'bg-slate-50 border-slate-300 text-slate-900',
+
     label: isDark ? 'text-slate-300' : 'text-slate-700',
+
+    // Nút ghost: Dark = hover sáng nhẹ
     btnGhost: isDark
-      ? 'text-slate-300 hover:text-white hover:bg-slate-800'
+      ? 'text-slate-400 hover:text-white hover:bg-white/10'
       : 'text-slate-600 hover:bg-slate-100',
+
+    // Modal: Dark = nền xanh đen sâu, viền violet
     modalBg: isDark
-      ? 'bg-slate-900 text-white border border-slate-700/80'
+      ? 'bg-slate-950 text-white border border-indigo-900/60 shadow-2xl shadow-black/60'
       : 'bg-white text-slate-900 border border-slate-200/60',
-    modalDivider: isDark ? 'border-slate-800' : 'border-slate-100',
+
+    modalDivider: isDark ? 'border-white/8' : 'border-slate-100',
+
     editBtn: isDark
-      ? 'text-slate-300 hover:text-white hover:bg-slate-800/80'
+      ? 'text-slate-400 hover:text-cyan-300 hover:bg-cyan-950/40'
       : 'text-slate-500 hover:text-slate-900 hover:bg-black/5',
+
     deleteBtn: isDark
-      ? 'text-slate-300 hover:text-rose-400 hover:bg-rose-950/40'
+      ? 'text-slate-400 hover:text-rose-400 hover:bg-rose-950/40'
       : 'text-slate-500 hover:text-rose-600 hover:bg-rose-50',
+
+    // Badge "Hôm nay": Dark = emerald neon
     todayBadge: isDark
-      ? 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'
+      ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30'
       : 'bg-emerald-100 text-emerald-800 border-emerald-200',
+
     todayBtn: isDark
-      ? 'text-sky-400 bg-sky-950/60 hover:bg-sky-900/80 border border-sky-800/40'
+      ? 'text-cyan-400 bg-cyan-950/50 hover:bg-cyan-900/50 border border-cyan-800/40'
       : 'text-slate-800 bg-black/5 hover:bg-black/10 border border-black/5',
-    todayChip: isDark ? 'bg-sky-300 text-slate-950' : 'bg-amber-400 text-slate-950',
-    inactiveTodayChip: isDark ? 'bg-sky-400/90 text-slate-950' : 'bg-amber-300 text-slate-900',
+
+    // Chip "Nay" trên tab: Dark = cyan sáng
+    todayChip: isDark ? 'bg-cyan-300 text-slate-950' : 'bg-amber-400 text-slate-950',
+    inactiveTodayChip: isDark ? 'bg-cyan-400/80 text-slate-950' : 'bg-amber-300 text-slate-900',
   };
 
   // ─────────────────────────────────────────────

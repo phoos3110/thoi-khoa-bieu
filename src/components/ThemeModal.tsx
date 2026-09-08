@@ -136,7 +136,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                     : 'border-slate-700 bg-slate-800/60 hover:border-slate-500'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-amber-300 to-orange-400 flex items-center justify-center shadow-md shadow-amber-400/30">
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-amber-300 to-orange-400 flex items-center justify-center shadow-md shadow-amber-400/30">
                   <Sun className="w-5 h-5 text-white" />
                 </div>
                 <div>
@@ -147,7 +147,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                 </div>
                 {!isDark && (
                   <div className="absolute top-2 right-2 w-4 h-4 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                    <Check className="w-2.5 h-2.5 text-white stroke-3" />
                   </div>
                 )}
               </button>
@@ -158,22 +158,22 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                 onClick={() => onUpdateTheme({ ...themeConfig, mode: 'dark' })}
                 className={`relative flex flex-col items-center gap-2 p-3.5 rounded-xl border-2 transition active:scale-98 ${
                   isDark
-                    ? 'border-sky-500 bg-sky-950/40 ring-2 ring-sky-500/20'
+                    ? 'border-cyan-500 bg-indigo-950/50 ring-2 ring-cyan-500/20'
                     : 'border-slate-200 bg-slate-50 hover:border-slate-300'
                 }`}
               >
-                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center shadow-md shadow-slate-900/50 border border-slate-600">
-                  <Moon className="w-5 h-5 text-sky-300" />
+                <div className="w-10 h-10 rounded-full bg-linear-to-br from-indigo-800 to-slate-950 flex items-center justify-center shadow-md shadow-indigo-900/60 border border-indigo-700/60">
+                  <Moon className="w-5 h-5 text-cyan-300" />
                 </div>
                 <div>
-                  <span className={`text-xs font-bold block text-center ${isDark ? 'text-sky-400' : 'text-slate-700'}`}>
+                  <span className={`text-xs font-bold block text-center ${isDark ? 'text-cyan-400' : 'text-slate-700'}`}>
                     Tối
                   </span>
                   <span className="text-[10px] text-slate-400 block text-center mt-0.5">OLED & Tiết kiệm pin</span>
                 </div>
                 {isDark && (
-                  <div className="absolute top-2 right-2 w-4 h-4 bg-sky-500 rounded-full flex items-center justify-center">
-                    <Check className="w-2.5 h-2.5 text-white stroke-[3]" />
+                  <div className="absolute top-2 right-2 w-4 h-4 bg-cyan-500 rounded-full flex items-center justify-center">
+                    <Check className="w-2.5 h-2.5 text-white stroke-3" />
                   </div>
                 )}
               </button>
