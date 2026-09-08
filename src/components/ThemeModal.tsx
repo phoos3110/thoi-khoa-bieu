@@ -138,32 +138,43 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
                     key={preset.id}
                     type="button"
                     onClick={() => handleSelectPreset(preset.id)}
-                    className={`group relative p-2 rounded-xl border text-left flex flex-col items-start gap-1.5 transition active:scale-98 ${
+                    style={{
+                      borderColor: isSelected ? preset.style.accentColor : undefined,
+                    }}
+                    className={`group relative p-2.5 rounded-xl border text-left flex flex-col items-start gap-1.5 transition active:scale-98 ${
                       isSelected
-                        ? 'border-blue-600 ring-2 ring-blue-500/30 bg-blue-500/10'
+                        ? 'ring-2 ring-blue-500/20 bg-blue-500/10'
                         : isDarkMode
-                        ? 'border-slate-700 hover:border-slate-600 bg-slate-800/80'
+                        ? 'border-slate-700/80 hover:border-slate-600 bg-slate-800/80'
                         : 'border-slate-200 hover:border-slate-300 bg-white'
                     }`}
                   >
                     {/* Thumbnail preview */}
                     <div 
-                      className="w-full h-11 rounded-lg border border-black/10 shadow-xs relative overflow-hidden flex items-center justify-center"
+                      className="w-full h-12 rounded-lg border border-black/10 shadow-xs relative overflow-hidden flex items-center justify-center"
                       style={{ background: preset.preview }}
                     >
                       {isSelected && (
-                        <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center shadow">
+                        <div 
+                          className="w-5 h-5 rounded-full text-white flex items-center justify-center shadow-md"
+                          style={{ backgroundColor: preset.style.accentColor }}
+                        >
                           <Check className="w-3 h-3 stroke-3" />
                         </div>
                       )}
                     </div>
-                    <span className={`text-xs font-semibold truncate w-full ${
-                      isSelected 
-                        ? 'text-blue-500 font-bold' 
-                        : isDarkMode ? 'text-slate-300' : 'text-slate-700'
-                    }`}>
-                      {preset.name}
-                    </span>
+                    <div className="w-full min-w-0">
+                      <span className={`text-xs font-bold truncate block ${
+                        isSelected 
+                          ? (isDarkMode ? 'text-white' : 'text-slate-900') 
+                          : isDarkMode ? 'text-slate-300' : 'text-slate-800'
+                      }`}>
+                        {preset.name}
+                      </span>
+                      <span className="text-[10px] text-slate-400 truncate block leading-tight mt-0.5">
+                        {preset.tagline}
+                      </span>
+                    </div>
                   </button>
                 );
               })}
