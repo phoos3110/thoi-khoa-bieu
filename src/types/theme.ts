@@ -7,7 +7,6 @@ export type ThemeMode = 'light' | 'dark';
 
 export interface AppThemeConfig {
   mode: ThemeMode;
-  avatarImage?: string;  // Base64 — ảnh cá nhân của người dùng
   customBg?: string;     // Base64 — ảnh nền tùy chỉnh
   overlayDarkness: number; // 0–80 (%)
   blur: number;            // 0–10 (px)

@@ -8,7 +8,6 @@ import {
   RotateCcw,
   Sliders,
   Trash2,
-  User,
   Check,
 } from 'lucide-react';
 import { AppThemeConfig, DEFAULT_THEME_CONFIG } from '../types/theme';
@@ -26,9 +25,7 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
   onClose,
 }) => {
   const bgInputRef = useRef<HTMLInputElement>(null);
-  const avatarInputRef = useRef<HTMLInputElement>(null);
   const [isUploadingBg, setIsUploadingBg] = useState(false);
-  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   const isDark = themeConfig.mode === 'dark';
@@ -51,27 +48,6 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
     } finally {
       setIsUploadingBg(false);
       if (bgInputRef.current) bgInputRef.current.value = '';
-    }
-  };
-
-  // ——— Upload ảnh cá nhân ———
-  const handleAvatarFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    if (!file.type.startsWith('image/')) {
-      setUploadError('Vui lòng chọn một file ảnh hợp lệ!');
-      return;
-    }
-    try {
-      setIsUploadingAvatar(true);
-      setUploadError(null);
-      const base64 = await compressImage(file, 400, 400, 0.85);
-      onUpdateTheme({ ...themeConfig, avatarImage: base64 });
-    } catch {
-      setUploadError('Không thể tải ảnh cá nhân. Vui lòng thử ảnh khác!');
-    } finally {
-      setIsUploadingAvatar(false);
-      if (avatarInputRef.current) avatarInputRef.current.value = '';
     }
   };
 
@@ -100,9 +76,9 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
         {/* ——— Header ——— */}
         <div className={`px-5 py-4 border-b flex items-center justify-between ${headerBg}`}>
           <div>
-            <h2 className="font-bold text-base leading-tight">Cá Nhân Hóa</h2>
+            <h2 className="font-bold text-base leading-tight">Giao Diện & Hình Nền</h2>
             <p className={`text-[11px] mt-0.5 ${isDark ? 'text-slate-400' : 'text-slate-500'}`}>
-              Giao diện · Ảnh nền · Ảnh cá nhân
+              Tùy chỉnh chế độ sáng / tối và ảnh nền
             </p>
           </div>
           <button
@@ -180,62 +156,10 @@ export const ThemeModal: React.FC<ThemeModalProps> = ({
             </div>
           </div>
 
-          {/* 2. Ảnh cá nhân */}
+          {/* 2. Ảnh nền tùy chỉnh */}
           <div>
             <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${labelCls}`}>
-              2. Ảnh Cá Nhân
-            </label>
-            <input type="file" ref={avatarInputRef} onChange={handleAvatarFileChange} accept="image/*" className="hidden" />
-            <div className={`flex items-center gap-3.5 p-3.5 rounded-xl border ${sectionBg}`}>
-              {/* Preview avatar */}
-              <div className="relative shrink-0">
-                <div className="w-16 h-16 rounded-full overflow-hidden border-2 border-blue-500/50 shadow-md">
-                  {themeConfig.avatarImage ? (
-                    <img src={themeConfig.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
-                  ) : (
-                    <div className={`w-full h-full flex items-center justify-center ${isDark ? 'bg-slate-700' : 'bg-slate-200'}`}>
-                      <User className={`w-7 h-7 ${isDark ? 'text-slate-400' : 'text-slate-400'}`} />
-                    </div>
-                  )}
-                </div>
-              </div>
-              <div className="flex-1 space-y-2">
-                <p className={`text-xs font-medium ${isDark ? 'text-slate-300' : 'text-slate-700'}`}>
-                  {themeConfig.avatarImage ? 'Ảnh của bạn đang hiện trên header' : 'Chưa có ảnh cá nhân'}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => avatarInputRef.current?.click()}
-                    disabled={isUploadingAvatar}
-                    className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white transition active:scale-95"
-                  >
-                    {isUploadingAvatar ? (
-                      <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                    ) : (
-                      <Upload className="w-3 h-3" />
-                    )}
-                    <span>{themeConfig.avatarImage ? 'Đổi ảnh' : 'Chọn ảnh'}</span>
-                  </button>
-                  {themeConfig.avatarImage && (
-                    <button
-                      type="button"
-                      onClick={() => onUpdateTheme({ ...themeConfig, avatarImage: undefined })}
-                      className="flex items-center gap-1.5 text-[11px] font-bold px-2.5 py-1.5 rounded-lg bg-rose-600/20 hover:bg-rose-600/30 text-rose-400 border border-rose-500/30 transition active:scale-95"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                      <span>Xóa</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* 3. Ảnh nền tùy chỉnh */}
-          <div>
-            <label className={`block text-xs font-bold uppercase tracking-wider mb-3 ${labelCls}`}>
-              3. Ảnh Nền Tùy Chỉnh
+              2. Ảnh Nền Tùy Chỉnh
             </label>
             <input type="file" ref={bgInputRef} onChange={handleBgFileChange} accept="image/*" className="hidden" />
 

@@ -12,7 +12,7 @@ import {
   AlertCircle,
   Sun,
   Moon,
-  User,
+  Palette,
 } from 'lucide-react';
 import { ClassItem, DayNumber } from './types/schedule';
 import { AppThemeConfig, DEFAULT_THEME_CONFIG } from './types/theme';
@@ -469,19 +469,13 @@ export default function App() {
                 {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
               </button>
 
-              {/* Avatar / Cài đặt */}
+              {/* Nút Đổi nền / Cài đặt */}
               <button
                 onClick={() => setShowThemeModal(true)}
-                className="w-8 h-8 rounded-full overflow-hidden border-2 border-white/40 hover:border-white/80 shadow active:scale-95 transition"
-                title="Cài đặt cá nhân"
+                className="w-8 h-8 flex items-center justify-center rounded-xl bg-white/15 hover:bg-white/25 text-white border border-white/20 backdrop-blur-md active:scale-95 transition"
+                title="Đổi hình nền / giao diện"
               >
-                {themeConfig.avatarImage ? (
-                  <img src={themeConfig.avatarImage} alt="Avatar" className="w-full h-full object-cover" />
-                ) : (
-                  <div className="w-full h-full bg-white/20 flex items-center justify-center">
-                    <User className="w-4 h-4 text-white" />
-                  </div>
-                )}
+                <Palette className="w-4 h-4" />
               </button>
 
               {/* Nút Thêm ca */}
