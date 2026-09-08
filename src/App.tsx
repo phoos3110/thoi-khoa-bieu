@@ -15,6 +15,7 @@ import {
 import { ClassItem, DayNumber } from './types/schedule';
 import { AppThemeConfig, DEFAULT_THEME_CONFIG, PRESET_THEMES } from './types/theme';
 import { ThemeModal } from './components/ThemeModal';
+import { UpdateNotification } from './components/UpdateNotification';
 
 const DAYS: { number: DayNumber; name: string; short: string }[] = [
   { number: 2, name: 'Thứ Hai', short: 'Thứ 2' },
@@ -89,6 +90,118 @@ export default function App() {
       window.removeEventListener('offline', handleOffline);
     };
   }, []);
+
+  // Trạng thái kiểm tra & hiển thị thông báo bản cập nhật mới
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [waitingWorker, setWaitingWorker] = useState<ServiceWorker | null>(null);
+  const [isUpdating, setIsUpdating] = useState(false);
+
+  // 1. Lắng nghe Service Worker phát hiện file mới từ commit/build mới
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('serviceWorker' in navigator)) return;
+
+    navigator.serviceWorker.ready.then((reg) => {
+      // Chủ động kiểm tra cập nhật mỗi khi mở app
+      reg.update().catch(() => {});
+
+      if (reg.waiting) {
+        setWaitingWorker(reg.waiting);
+        setUpdateAvailable(true);
+      }
+
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        if (newWorker) {
+          newWorker.addEventListener('statechange', () => {
+            if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+              setWaitingWorker(newWorker);
+              setUpdateAvailable(true);
+            }
+          });
+        }
+      });
+    });
+  }, []);
+
+  // 2. Định kỳ kiểm tra version.json từ Vercel (ngay cả khi app đang mở)
+  useEffect(() => {
+    const checkVersion = async () => {
+      try {
+        if (!navigator.onLine) return;
+        const res = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data && data.buildTime) {
+          const currentStored = localStorage.getItem('app_installed_build_time');
+          if (!currentStored) {
+            localStorage.setItem('app_installed_build_time', data.buildTime);
+          } else if (data.buildTime !== currentStored) {
+            // Đã có commit / build mới!
+            setUpdateAvailable(true);
+          }
+        }
+      } catch (err) {
+        // bỏ qua nếu lỗi mạng
+      }
+    };
+
+    // Kiểm tra ngay khi khởi động
+    checkVersion();
+
+    // Kiểm tra lại mỗi 45 giây
+    const interval = setInterval(checkVersion, 45000);
+
+    // Kiểm tra khi người dùng mở lại tab hoặc mở khóa điện thoại
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkVersion();
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.ready.then((reg) => reg.update().catch(() => {}));
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
+  // 3. Xử lý khi người dùng bấm "Cập nhật ngay"
+  const handleApplyUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      // Xóa cache cũ
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map((k) => caches.delete(k)));
+      }
+
+      // Lưu buildTime mới vào máy
+      try {
+        const res = await fetch(`./version.json?t=${Date.now()}`, { cache: 'no-store' });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.buildTime) {
+            localStorage.setItem('app_installed_build_time', data.buildTime);
+          }
+        }
+      } catch {}
+
+      // Báo Service Worker kích hoạt ngay
+      if (waitingWorker) {
+        waitingWorker.postMessage({ type: 'SKIP_WAITING' });
+      }
+    } catch (e) {
+      console.error(e);
+    }
+
+    // Tải lại trang ngay lập tức để nạp phiên bản mới
+    setTimeout(() => {
+      window.location.reload();
+    }, 250);
+  };
 
   // Cập nhật ngày theo thời gian thực nếu qua ngày mới
   useEffect(() => {
@@ -706,6 +819,14 @@ export default function App() {
           onClose={() => setShowThemeModal(false)}
         />
       )}
+
+      {/* 8. Thông báo có bản cập nhật mới (Tự động phát hiện khi có commit mới) */}
+      <UpdateNotification
+        show={updateAvailable}
+        isUpdating={isUpdating}
+        onUpdate={handleApplyUpdate}
+        onDismiss={() => setUpdateAvailable(false)}
+      />
       </div>
     </div>
   );

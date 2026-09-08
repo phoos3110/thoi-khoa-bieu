@@ -15,7 +15,13 @@ self.addEventListener('install', (event) => {
       console.warn('Pre-cache error:', err);
     })
   );
-  self.skipWaiting();
+});
+
+// Cho phép ứng dụng gửi lệnh SKIP_WAITING khi người dùng bấm nút "Cập nhật ngay"
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
 });
 
 self.addEventListener('activate', (event) => {
@@ -34,6 +40,18 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
+
+  // Luôn lấy version.json trực tiếp từ mạng (không lưu cache) để kiểm tra cập nhật mới nhất
+  if (event.request.url.includes('version.json')) {
+    event.respondWith(
+      fetch(event.request, { cache: 'no-store' }).catch(() => {
+        return new Response(JSON.stringify({ offline: true }), {
+          headers: { 'Content-Type': 'application/json' }
+        });
+      })
+    );
+    return;
+  }
 
   const isNavigation = event.request.mode === 'navigate' ||
     (event.request.headers.get('accept') && event.request.headers.get('accept').includes('text/html'));
